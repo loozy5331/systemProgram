@@ -94,37 +94,52 @@ def main():
         print (line)
 
     #--------------- Pass 2 ---------------
-    for line in intermediate_file: # read first input line (from intermediate_file)
+    for cnt, line in enumerate(intermediate_file): # read first input line (from intermediate_file)
+        print("count : {}".format(cnt + 1))
+        objectCode = ""
         line_addr = line[0] # PC는 +3 위치
         line_label = line[1] # pass2에서는 의미없음
         line_opcode = line[2] # read line opcode
         line_operand = line[3] # 즉시값 혹은 SYMBOL
-        ni = ["1", "1"]
+        ni = ["0", "0"]
         xbpe = ["0", "0", "0", "0"]
         display = "0x000" # 12 bits
+
         if line_opcode == 'START': # if OPCODE == 'START' then
             print('')
             # read next input line
         elif line_opcode != 'END':
             if line_label != ".":
                 if line_opcode in OPTAB.keys():
-                    if line_operand != "" or line_operand[0] != "#": # operand가 비워져 있지 않고, 즉시값이 아니면
+                    if line_operand != "": # operand가 비워져 있지 않고, 즉시값이 아니면
                         if line_operand in SYMTAB.keys(): # STMTAB에 있으면,
+                            ni[0] = "1"
+                            ni[1] = "1"
                             xbpe[2] = "1" # PC flag 설정
                             PC = int(line_addr) + 3 # 현재 PC 값
-                            display = "{:03x}".format((int(SYMTAB[line_operand]) - PC)//3) # 떨어진 거리
+                            display = "{:03x}".format((int(SYMTAB[line_operand]) - PC)) # 떨어진 byte
+                            objectCode = "{:02x}".format(OPTAB[line_opcode] + int("".join(ni), 2)) \
+                                         + "{:01x}".format(int("".join(xbpe), 2)) + display
+                        elif line_operand[0] == "#":  # 즉시 값이라면
+                            ni[0] = "0"  # 플래그 설정
+                            ni[1] = "1"
+                            display = "{:03x}".format(int(line_operand[1:]))
+                            objectCode = "{:02x}".format(OPTAB[line_opcode] + int("".join(ni), 2)) \
+                                         + "{:01x}".format(int("".join(xbpe), 2)) + display
                         else:
                             print("error! (undefined symbol)")
                             break
-                    else: # 즉시 값이라면
-                        ni[0] = "0" # 플래그 설정
-                        ni[1] = "1"
-                        display = "{:03x}".format(int(line_operand[1:]))
-                else: # BYTE, WORD 처리
+                    else: #RSUB 처리
+                        objectCode = "{:02x}".format(OPTAB[line_opcode]) + "0000"
+
+                elif line_opcode in ["BYTE", "WORD"]: # BYTE 처리
+                    objectCode = "{:06d}".format(int(line_operand))
+                elif line_opcode == "RSUB": # RSUB은 예외처리
+                    continue
+                else:
                     pass
-
-
-
+                if objectCode != "":
+                    print("0x{:03x} {:s}".format(line_addr, objectCode))
 
 
 
