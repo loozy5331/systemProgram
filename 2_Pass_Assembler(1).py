@@ -94,8 +94,7 @@ def main():
         print (line)
 
     #--------------- Pass 2 ---------------
-    for cnt, line in enumerate(intermediate_file): # read first input line (from intermediate_file)
-        print("count : {}".format(cnt + 1))
+    for line in intermediate_file: # read first input line (from intermediate_file)
         objectCode = ""
         line_addr = line[0] # PC는 +3 위치
         line_label = line[1] # pass2에서는 의미없음
@@ -130,10 +129,10 @@ def main():
                             print("error! (undefined symbol)")
                             break
                     else: #RSUB 처리
-                        objectCode = "{:02x}".format(OPTAB[line_opcode]) + "0000"
+                        objectCode = "{:02x}".format(OPTAB[line_opcode] + int("11", 2)) + "0000"
 
                 elif line_opcode in ["BYTE", "WORD"]: # BYTE 처리
-                    objectCode = "{:06d}".format(int(line_operand))
+                    objectCode = "{:06x}".format(int(line_operand))
                 elif line_opcode == "RSUB": # RSUB은 예외처리
                     continue
                 else:
